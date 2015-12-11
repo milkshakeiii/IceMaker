@@ -9,11 +9,13 @@ public class IceShape : MonoBehaviour
     public float blockSpacing = 4;
 	public Dictionary<GameObject, Vector2> blockPositions = new Dictionary<GameObject, Vector2>();
     public float slideSpeed;
+	public bool breakUpOnLanding = false;
 
     private int blocktype = -1;
     private int column = -1;
     private bool lockedIn = false;
 	private Tower myTower;
+	private int lockedBlockCount = 0;
 
     void OnCollisionEnter2D(Collision2D collision)
     {
@@ -32,11 +34,15 @@ public class IceShape : MonoBehaviour
             gameObject.transform.position = gameObject.transform.position - new Vector3(0, Time.deltaTime * slideSpeed, 0);
     }
 
-	public void InitializeIceShape (bool onLeftEdge, bool onRightEdge, Tower myNewTower)
+	public void SetTower(Tower myNewTower)
+	{
+		myTower = myNewTower;
+	}
+
+	public void RandomizeIceShape (bool onLeftEdge, bool onRightEdge)
     {
         if (onLeftEdge && onRightEdge)
             throw new UnityException("you can't be on both the left and right edge");
-		myTower = myNewTower;
         Vector2[] randomBlockPositions = RandomBlockPositions(onLeftEdge, onRightEdge);
         InstantiateBlocks(randomBlockPositions);
 	}
@@ -99,19 +105,36 @@ public class IceShape : MonoBehaviour
 
     }
 
-	public void LockBlocks(int blockRow, GameObject triggerBlock)
+	public void Landing(int blockRow, GameObject triggerBlock)
 	{
-		lockedIn = true;
-		for(int i = 0; i < transform.childCount; i++)
+		if (breakUpOnLanding)
 		{
-			GameObject block = transform.GetChild(i).gameObject;
-			Vector2 blockPosition = blockPositions[block];
-			Vector2 triggerBlockPosition = blockPositions[triggerBlock];
-			int lockColumn = column + (int)blockPosition.x;
-			int lockRow = blockRow + (int)blockPosition.y - (int)triggerBlockPosition.y;
-			block.GetComponent<IceBlock>().LockIn(lockColumn, 
-			                                         lockRow);
-			myTower.AddBlock(block, lockColumn, lockRow);
+			Disassemble();
+		}
+		else
+		{
+			for(int i = 0; i < transform.childCount; i++)
+			{
+				GameObject block = transform.GetChild(i).gameObject;
+				LockBlock (block, triggerBlock, blockRow);
+			}
+		}
+	}
+
+	public void LockBlock(GameObject block, GameObject triggerBlock, int blockRow)
+	{
+		Vector2 blockPosition = blockPositions[block];
+		Vector2 triggerBlockPosition = blockPositions[triggerBlock];
+		int lockColumn = column + (int)blockPosition.x;
+		int lockRow = blockRow + (int)blockPosition.y - (int)triggerBlockPosition.y;
+		block.GetComponent<IceBlock>().LockIn(lockColumn, 
+		                                      lockRow);
+		myTower.AddBlock(block, lockColumn, lockRow);
+
+		lockedBlockCount++;
+		if (lockedBlockCount == gameObject.transform.childCount)
+		{
+			lockedIn = true;
 		}
 	}
 
@@ -120,4 +143,20 @@ public class IceShape : MonoBehaviour
 		Destroy (gameObject);
 	}
 
+	public void Disassemble()
+	{	
+		transform.DetachChildren ();
+
+		foreach(KeyValuePair<GameObject, Vector2> block in blockPositions)
+		{
+			GameObject piece = Instantiate(gameObject) as GameObject;
+			piece.GetComponent<IceShape>().InstantiateBlocks(new Vector2[] {block.Value} );
+			piece.GetComponent<IceShape>().breakUpOnLanding = false;
+			piece.GetComponent<IceShape>().SetTower(myTower);
+			piece.GetComponent<IceShape>().SetColumn(column);
+			Destroy(block.Key);
+		}
+
+		Destroy (gameObject);
+	}
 }

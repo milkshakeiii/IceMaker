@@ -20,6 +20,7 @@ public class Tower : MonoBehaviour
 			GameOver ();
 			return;
 		}
+		Debug.Log ("column: " + column.ToString () + ", row: " + row.ToString ());
 		towerBlocks[column, row] = block;
 		CheckForClears ();
 	}

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class IceShapeGenerator : MonoBehaviour
@@ -66,12 +66,13 @@ public class IceShapeGenerator : MonoBehaviour
 		//make the shape, and tell its initializer whether or not it is on edges
 		//because edges cannot have all shapes
         if (column == 0)
-            newIceShape.InitializeIceShape(true, false, tower);
+            newIceShape.RandomizeIceShape(true, false);
         else if (column == columnCount - 1)
-            newIceShape.InitializeIceShape(false, true, tower);
+            newIceShape.RandomizeIceShape(false, true);
         else
-            newIceShape.InitializeIceShape(false, false, tower);
+            newIceShape.RandomizeIceShape(false, false);
 
+		newIceShape.SetTower (tower);
         newIceShape.SetColumn(column);
 
         newShape.transform.position = gameObject.transform.position + new Vector3(column * spacing, 0, 0);

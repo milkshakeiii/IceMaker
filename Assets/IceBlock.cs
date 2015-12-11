@@ -30,7 +30,9 @@ public class IceBlock : MonoBehaviour
 		{
 			return;
 		}
-		iceShape.LockBlocks(otherLockedRow + 1, gameObject);
+
+		iceShape.Landing(otherLockedRow + 1, gameObject);
+
 	}
 
 	public int GetLockedRow()
@@ -38,7 +40,7 @@ public class IceBlock : MonoBehaviour
 		return lockedRow;
 	}
 	
-	void Start () 
+	void Start ()
 	{
 		iceShape = gameObject.transform.parent.gameObject.GetComponent<IceShape> ();
 	}
